@@ -4,6 +4,7 @@ import os
 
 import tqdm
 
+#拼接两个json文件
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--data_phase", default='train')
@@ -16,18 +17,25 @@ parser.add_argument("--topk", type=int, default=30)
 
 def print_args(args):
     for flag, value in args.__dict__.items():
-        print('{}: {}'.format(flag, value))
+        print('{}: {}'.format(flag, value)) 
 
 
 if __name__ == "__main__":
     opts = parser.parse_args()
     print_args(opts)
+    """
+    data_phase: train
+    task: LaMP_2_time
+    ranker: recency
+    recency_topk: 0
+    topk: 30
+    """
 
-    task = opts.task
-    ranker = opts.ranker
+    task = opts.task #LaMP_2_time
+    ranker = opts.ranker #recency
 
+    #规范化输出的文件名
     result_file_name = 'rank_merge.json'
-
     if opts.recency_topk:
         output_ranking_addr = os.path.join(
             'data', opts.task,
