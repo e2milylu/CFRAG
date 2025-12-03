@@ -16,13 +16,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--task", default='LaMP_2_time')
 parser.add_argument("--source", default='recency')
 
-parser.add_argument("--cut_his_len", type=int, default=100)
+parser.add_argument("--cut_his_len", type=int, default=100) #？
 
 if __name__ == "__main__":
     opts = parser.parse_args()
     print("task: {}".format(opts.task))
-    get_corpus_fn = load_get_corpus_fn(opts.task)
-    use_date = opts.source.endswith('date')
+    get_corpus_fn = load_get_corpus_fn(opts.task) #适用于LaMa2处理profile为固定格式的函数
+    use_date = opts.source.endswith('date') #False
 
     try:
         cut_prof_len = int(opts.source.split('_')[-1])
@@ -41,8 +41,10 @@ if __name__ == "__main__":
     dev_outputs = json.load(
         open(os.path.join(opts.input_path, 'dev/dev_outputs.json'), 'r'))
 
-    user_id_list = []
-    corpus_list = []
+    #获取train和dev中的user_id和profile，理想情况一个user_id和一个profile，user_id如果重复会出现什么情况，相同的user_id的profile一样吗？猜测一样
+    user_id_list = [] #每一个user_id
+    corpus_list = [] #每一个user的profile
+    #len(user_id_list)==len(corpus_list)
     for i in tqdm(range(len(train_questions))):
         user_id_list.append(train_questions[i]['user_id'])
         profile = sorted(
@@ -50,10 +52,10 @@ if __name__ == "__main__":
             key=lambda x: tuple(map(int,
                                     str(x['date']).split("-"))))
         if cut_prof_len is not None:
-            profile = profile[-cut_prof_len:]
+            profile = profile[-cut_prof_len:] #取最近时间的historcial document
         corpus = get_corpus_fn(profile, use_date=use_date)
         if opts.cut_his_len is not None:
-            corpus = corpus[-opts.cut_his_len:]
+            corpus = corpus[-opts.cut_his_len:] #字符串列表
         corpus_list.extend(corpus)
 
     for i in tqdm(range(len(dev_questions))):
@@ -69,6 +71,16 @@ if __name__ == "__main__":
             corpus = corpus[-opts.cut_his_len:]
         corpus_list.extend(corpus)
 
+    """
+    len(user_df)?=len(corpus_df)
+    user_df:
+    id user_id
+    user_id去重，得到user的数量
+    corpus_df:
+    id corpus
+    train和dev会出现同一个user_id，但是train和dev的profile不一定一样吧？得看数据集怎么设计的
+    condition 1: 同一个user_id，profile相同，len(user_df)==len(corpus_df)
+    """
     user_df = pd.DataFrame({"user_id": list(set(user_id_list))})
     user_df['id'] = np.arange(len(user_df))
     print("num user: {}".format(len(user_df)))
@@ -105,7 +117,7 @@ if __name__ == "__main__":
         corpus = get_corpus_fn(profile, use_date=use_date)
         if opts.cut_his_len is not None:
             corpus = corpus[-opts.cut_his_len:]
-        corpus_ids = [corpus2id[x] for x in corpus]
+        corpus_ids = [corpus2id[x] for x in corpus] #每一个historical document中的每一条记录的id
 
         new_profile = []
         for j in range(len(profile)):
@@ -114,8 +126,8 @@ if __name__ == "__main__":
             new_profile.append(cur_profile)
 
         if len(user_vocab[user2id[user_id]]['corpus_ids']) == 0:
-            user_vocab[user2id[user_id]]['profile'] = new_profile
-            user_vocab[user2id[user_id]]['corpus_ids'] = corpus_ids
+            user_vocab[user2id[user_id]]['profile'] = new_profile #一个user的所有historical
+            user_vocab[user2id[user_id]]['corpus_ids'] = corpus_ids #一个user的topk historical
         else:
             prev_corpus_ids = user_vocab[user2id[user_id]]['corpus_ids']
             assert prev_corpus_ids == corpus_ids
