@@ -4,8 +4,9 @@ import os
 
 import tqdm
 
-#拼接两个json文件
-
+#拼接train两个json文件questions+output
+#questions: 给每个profile加入了user_id，根据时间排序取前topk条历史记录
+output:取出output与questions中的文件进行拼接
 """
 train_questions.json
 [
