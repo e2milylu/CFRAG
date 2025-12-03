@@ -5,6 +5,40 @@ import os
 import tqdm
 
 #拼接两个json文件
+
+"""
+train_questions.json
+[
+    "id":805
+    "input":"task+description"
+    "profile":
+            [
+            {"tag":"classic",
+            "description":"",
+            "date":"2006-7-12",
+            "id":804},
+            ...
+            ]
+    "user_id":88966
+]
+
+train_output.json
+{
+"task":"LaMP_2",
+"gold":[
+        {
+        id:"805",
+        output:"classfic"
+        },
+        ...
+        {
+        id:"809",
+        output:"classfic"
+        }
+    ]
+}
+
+"""
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--data_phase", default='train')
@@ -69,6 +103,7 @@ if __name__ == "__main__":
         inp = data['input']
         profile = data['profile']
 
+        #每个historical docu加入user_id
         new_profile = []
         for i in range(len(profile)):
             cur_profile = profile[i]
@@ -76,6 +111,7 @@ if __name__ == "__main__":
             new_profile.append(cur_profile)
         profile = new_profile
 
+        #取前topk条historical document
         profile = sorted(
             profile, key=lambda x: tuple(map(int,
                                              str(x['date']).split("-"))))
